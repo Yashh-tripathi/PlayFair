@@ -10,3 +10,5 @@ class ApiRespose {
         this.success = statusCode < 400
     }
 }
+
+export {ApiRespose}
