@@ -15,6 +15,9 @@ const generateAccessAndRefreshToken = async (userId) => {
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false})
 
+        // console.log(" REFRESH TOKEN BEING SET FOR USER:", user._id);
+
+
         return {accessToken, refreshToken}
     } catch (error) {
         throw new ApiError(500, "Something went wrong while generating referesh and access token")
@@ -152,4 +155,38 @@ export const logginUser = asyncHandler(async (req, res) => {
             "User logged in successfully"
         )
     )
+});
+
+export const logoutUser = asyncHandler(async (req, res) => {
+    const UpdatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1 // this removes the field from document
+            }
+        }, 
+        {
+            new: true
+        }
+    )
+
+    // console.log("Updated user: ", UpdatedUser)
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+        new ApiRespose(
+            200,
+            {},
+            "User logged out successfully"
+        )
+    )
 })
+
