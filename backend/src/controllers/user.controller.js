@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/users.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.service.js";
 import { ApiRespose } from "../utils/ApiResponse.js";
-
+import jwt from "jsonwebtoken"
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -188,5 +188,60 @@ export const logoutUser = asyncHandler(async (req, res) => {
             "User logged out successfully"
         )
     )
-})
+});
+
+
+export const refreshAccessToken = asyncHandler(async (req,res) => {
+    // req.body mai se access token gayab hua hai but refresh token abhi bhi cookie hoga 
+    // vaha se refresh token uthao aur user verify karo firr sidha generate access token ko call karo
+    // naya access token iss user ko assign kardo
+    // the thinking is correct 
+
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if(!refreshToken){
+        throw new ApiError(401, "Unauthorized access request");
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const user = await User.findById(decodedToken?._id);
+
+        if(!user){
+            throw new ApiError(404, "User does not exist")
+        }
+
+        if( incomingRefreshToken !== user?.refreshToken ){
+            throw new ApiError(401, "Refresh token is expired or used")
+        }
+
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+
+        const  {accessToken,  newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(
+            new ApiRespose(
+                200,
+                {accessToken, refreshToken: newRefreshToken},
+                "access token refreshed"
+            )
+        );
+
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Something went wrong while regenrating the access token")
+    }
+});
+
+
 
