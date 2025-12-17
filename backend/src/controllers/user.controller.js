@@ -181,13 +181,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(
-        new ApiRespose(
-            200,
-            {},
-            "User logged out successfully"
-        )
-    )
+    .json(new ApiRespose(200,{},"User logged out successfully"))
 });
 
 
@@ -244,4 +238,78 @@ export const refreshAccessToken = asyncHandler(async (req,res) => {
 });
 
 
+export const changeCurrentPassword = asyncHandler(async (req, res) => {
+    // middleware hame req.user de ddega 
+    // req.body se user ko old aur new password enter karao
+    // password verify karao 
+    // new password ko save kardo
 
+    const {oldPassword , newPassword, confPassword} = req.body;
+
+    if(newPassword !== confPassword){
+        throw new ApiError(400, "Please make sure the confirmation password is correct")
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    const isPasswordCorrect = await isPasswordCorrect(oldPassword);
+
+    if(!isPasswordCorrect){
+        throw new ApiError(400, "Invalid old password");
+    }
+
+    user.password = newPassword;
+
+    await user.save({ validateBeforeSave: false});
+
+    return res
+    .status(200)
+    .json(
+        new ApiRespose(
+            200,
+            {},
+            "Password changed successfully"
+        )
+    )
+});
+
+
+
+export const getCurrentUser = asyncHandler(async (req,res) => {
+
+    return res
+    .status(200)
+    .json(
+        new ApiRespose(
+            200,
+            req.user,
+            "User fetched"
+        )
+    )
+});
+
+
+export const updateAccountDetails = asyncHandler(async (req, res) => {
+    const {fullName, email} = req.body;
+
+    if(!fullName || !email){
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                fullName: fullName,
+                email: email
+            }
+        },
+        {
+            new: true
+        }
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiRespose(200, user, "User updated succesfully"))
+})
