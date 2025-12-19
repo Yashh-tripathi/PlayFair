@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/users.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.service.js";
-import { ApiRespose } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import { getPublicIdFromUrl } from "../utils/publicIdExtract.service.js";
 import {v2 as cloudinary} from "cloudinary"
@@ -99,7 +99,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json(
-        new ApiRespose(200, createdUser, "User registered successfully")
+        new ApiResponse(200, createdUser, "User registered successfully")
     )
 
 });
@@ -149,7 +149,7 @@ export const logginUser = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken,options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-        new ApiRespose(
+        new ApiResponse(
             200,
             {
                 user: loggedInUser, accessToken, refreshToken
@@ -183,7 +183,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiRespose(200,{},"User logged out successfully"))
+    .json(new ApiResponse(200,{},"User logged out successfully"))
 });
 
 
@@ -227,7 +227,7 @@ export const refreshAccessToken = asyncHandler(async (req,res) => {
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", newRefreshToken, options)
         .json(
-            new ApiRespose(
+            new ApiResponse(
                 200,
                 {accessToken, refreshToken: newRefreshToken},
                 "access token refreshed"
@@ -267,7 +267,7 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        new ApiRespose(
+        new ApiResponse(
             200,
             {},
             "Password changed successfully"
@@ -282,7 +282,7 @@ export const getCurrentUser = asyncHandler(async (req,res) => {
     return res
     .status(200)
     .json(
-        new ApiRespose(
+        new ApiResponse(
             200,
             req.user,
             "User fetched"
@@ -313,7 +313,7 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(new ApiRespose(200, user, "User updated succesfully"))
+    .json(new ApiResponse(200, user, "User updated succesfully"))
 });
 
 export const updateUserAvatar = asyncHandler(async (req, res) => {
@@ -348,7 +348,7 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
     ).select("-password");
 
     return res.status(200).json(
-        new ApiRespose(200, updatedUser, "Avatar image updated successfully")
+        new ApiResponse(200, updatedUser, "Avatar image updated successfully")
     );
 });
 
@@ -388,9 +388,7 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        200,
-        updatedUser,
-        "Uploaded cover image successfully"
+        new ApiResponse(200, updatedUser, "User cover image updated successfully")
     )
 });
 
