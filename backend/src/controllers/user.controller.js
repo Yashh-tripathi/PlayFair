@@ -350,4 +350,47 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiRespose(200, updatedUser, "Avatar image updated successfully")
     );
-})
+});
+
+// for now commit but test it foresure
+export const updateCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path;
+    if(!coverImageLocalPath){ throw new ApiError(400, "File is missing with request") }
+    const user = await User.findById(req.user?._id);
+    if(user?.coverImage){
+        const oldPublicId = getPublicIdFromUrl(user.coverImage);
+        if(oldPublicId){
+            try {
+                await cloudinary.uploader.destroy(oldPublicId, {resource_type: "image"});
+            } catch (error) {
+                throw new ApiError(400, error?.message || "Something went wrong")
+            }
+        }
+
+
+        const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+        if(!coverImage){
+            throw new ApiError(400, "Error while uploading cover image")
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $or: {
+                    coverImage: coverImage.url
+                }
+            },
+            { new: true }
+        ).select("-password")
+    }
+
+    return res
+    .status(200)
+    .json(
+        200,
+        updatedUser,
+        "Uploaded cover image successfully"
+    )
+});
+
